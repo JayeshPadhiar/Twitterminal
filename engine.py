@@ -7,7 +7,6 @@ class Engine:
 
         self.keys = dict(keys)
 
-        print(4*'-' , 'Twitterminal', 4*'-', end='\n\n')
 
         pprint(self.keys)
         
