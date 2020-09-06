@@ -1,3 +1,4 @@
+import shutil
 import tweepy
 import argparse
 from pprint import pprint
@@ -13,6 +14,8 @@ class Engine:
         self.auth.set_access_token(
             self.keys['token'], self.keys['tokenSecret'])
 
+        self.columns = int(shutil.get_terminal_size().columns)
+
         self.api = tweepy.API(self.auth)
 
         self.parser = argparse.ArgumentParser()
@@ -22,26 +25,26 @@ class Engine:
 
     def wrap(task):
         def wrapper(*args):
-            print(40*'-', end='\n\n')
+            columns = int(shutil.get_terminal_size().columns)
+            print()
+            print(f"{80*'-'}\n\n".center(columns))
             task(*args)
-            print(40*'-', end='\n\n')
+            print(f"{80*'-'}\n\n".center(columns))
         return wrapper
 
-    @wrap
     def show(self, *ids):
         for id in ids:
             try:
                 user = self.api.get_user(id)
-                print('Name : ', user.name, end=' ')
-                print("\U0001f535" if user.verified == True else '')
-                print('ID : ', user.screen_name)
-                print('%d Followers\t%d Following' %
-                        (user.followers_count, user.friends_count))
-            except Exception:
-                print('Error')
+                print(f'{user.name}'.center(self.columns))
+                print(f'(@{user.screen_name})'.center(self.columns), end='\n\n')
+                print(f'{user.followers_count} Followers    {user.friends_count} Following\n'.center(self.columns))
+                print("\n".join(line.center(self.columns)  for line in user.description.split("\n")))
 
+            except Exception as err:
+                    print(f"Error : {err}".center(self.columns))
             finally:
-                print()
+                print('\n', f"{40*'-'}\n".center(self.columns), sep='')
 
     @wrap
     def me(self, *args):
@@ -54,4 +57,4 @@ class Engine:
             'show': self.show,
             'me': self.me
         }
-        task = self.plex.get(req.lower(), self.unknown)(*args)
+        self.plex.get(req.lower(), self.unknown)(*args)
