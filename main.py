@@ -9,3 +9,7 @@ with open('keys.json', 'r') as creds:
     keys = json.load(creds)
 
 eng = engine.Engine(keys)
+
+while(True):
+    req = input('> ').strip().split()
+    eng.handler(req[0], *req[1:])
