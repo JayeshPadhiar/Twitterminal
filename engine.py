@@ -1,8 +1,9 @@
 import shutil
 import tweepy
 import argparse
+import subprocess
+import os
 from pprint import pprint
-
 
 class Engine:
 
@@ -20,6 +21,13 @@ class Engine:
 
         self.parser = argparse.ArgumentParser()
 
+        showarg = self.parser.add_argument_group('show')
+        showarg.add_argument('-u', '--user', nargs='+')
+        showarg.add_argument('-t', '--tweets', type=int, default=0)
+
+    def exit(self, *args):
+        exit()
+
     def unknown(self, *args):
         print('Invalid Function')
 
@@ -32,14 +40,27 @@ class Engine:
             print(f"{80*'-'}\n\n".center(columns))
         return wrapper
 
-    def show(self, *ids):
+    @wrap
+    def show(self, *args):
+
+        data = self.parser.parse_args(args)
+
+        ids = data.user
+        numtweets = data.tweets
+
         for id in ids:
             try:
                 user = self.api.get_user(id)
                 print(f'{user.name}'.center(self.columns))
                 print(f'(@{user.screen_name})'.center(self.columns), end='\n\n')
                 print(f'{user.followers_count} Followers    {user.friends_count} Following\n'.center(self.columns))
-                print("\n".join(line.center(self.columns)  for line in user.description.split("\n")))
+                print("\n".join(line.center(self.columns)  for line in user.description.split("\n")), '\n\n')
+
+                if numtweets:
+                    tweets = self.api.user_timeline(id, count=numtweets)
+                    for tweet in tweets:
+                        print("\n".join(line.center(self.columns)  for line in tweet.text.split("\n")), end='\n\n')
+                        
 
             except Exception as err:
                     print(f"Error : {err}".center(self.columns))
@@ -55,6 +76,7 @@ class Engine:
     def handler(self, req, *args):
         self.plex = {
             'show': self.show,
-            'me': self.me
+            'me': self.me,
+            'exit': self.exit
         }
         self.plex.get(req.lower(), self.unknown)(*args)
