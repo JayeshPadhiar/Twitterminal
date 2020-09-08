@@ -1,11 +1,18 @@
 import shutil
 import tweepy
 import argparse
-import subprocess
-import os
 from pprint import pprint
 
+
 class Engine:
+
+    def parseinit(self):
+        showarg = self.parser.add_argument_group('show')
+        showarg.add_argument('-u', '--user', nargs='+')
+        showarg.add_argument('-t', '--tweets', type=int, default=0)
+
+        mearg = self.parser.add_argument_group('me')
+        #mearg.add_argument('-t', '--tweets', type=int, default=0)
 
     def __init__(self, keys):
         self.keys = dict(keys)
@@ -21,9 +28,8 @@ class Engine:
 
         self.parser = argparse.ArgumentParser()
 
-        showarg = self.parser.add_argument_group('show')
-        showarg.add_argument('-u', '--user', nargs='+')
-        showarg.add_argument('-t', '--tweets', type=int, default=0)
+        self.parseinit()
+        
 
     def exit(self, *args):
         exit()
@@ -53,30 +59,56 @@ class Engine:
                 user = self.api.get_user(id)
                 print(f'{user.name}'.center(self.columns))
                 print(f'(@{user.screen_name})'.center(self.columns), end='\n\n')
-                print(f'{user.followers_count} Followers    {user.friends_count} Following\n'.center(self.columns))
-                print("\n".join(line.center(self.columns)  for line in user.description.split("\n")), '\n\n')
+                print(f'{user.followers_count} Followers    {user.friends_count} Following\n'.center(
+                    self.columns))
+                print("\n".join(line.center(self.columns)
+                                for line in user.description.split("\n")), '\n\n')
 
                 if numtweets:
                     tweets = self.api.user_timeline(id, count=numtweets)
                     for tweet in tweets:
-                        print("\n".join(line.center(self.columns)  for line in tweet.text.split("\n")), end='\n\n')
-                        
+                        print("\n".join(line.center(self.columns)
+                                        for line in tweet.text.split("\n")))
+                        print('\n', f"{10*'-'}\n".center(self.columns))
 
             except Exception as err:
-                    print(f"Error : {err}".center(self.columns))
+                print(f"Error : {err}".center(self.columns))
             finally:
-                print('\n', f"{40*'-'}\n".center(self.columns), sep='')
+                print('\n', f"{80*'-'}\n".center(self.columns), end='\n\n\n', sep='')
 
     @wrap
     def me(self, *args):
-        me = self.api.me()
-        print('Name : ', me.name)
-        print("\U0001f535")
+        argums = self.parser.parse_args(args)
+        
+        numts = argums.tweets
+
+        try:
+            me = self.api.me()
+            print(f'{me.name}'.center(self.columns))
+            print(f'(@{me.screen_name})'.center(self.columns), end='\n\n')
+            print(f'{me.followers_count} Followers    {me.friends_count} Following\n'.center(
+                self.columns))
+            print("\n".join(line.center(self.columns)
+                            for line in me.description.split("\n")), '\n\n')
+
+            if numts:
+                tweets = self.api.user_timeline(me.name ,count=numts)
+                for tweet in tweets:
+                    print("\n".join(line.center(self.columns)
+                                    for line in tweet.text.split("\n")))
+                    print('\n', f"{10*'-'}\n".center(self.columns))
+                    
+
+        except Exception as err:
+            print(f"Error : {err}".center(self.columns))
+        finally:
+            print('\n', f"{40*'-'}\n".center(self.columns), end='\n\n\n',sep='')
 
     def handler(self, req, *args):
         self.plex = {
             'show': self.show,
             'me': self.me,
-            'exit': self.exit
+            'exit': self.exit,
+            'help': self.parser.print_help
         }
         self.plex.get(req.lower(), self.unknown)(*args)
