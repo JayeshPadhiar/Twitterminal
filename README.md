@@ -11,7 +11,4 @@ keys.json :-
     {
         "apiKey" : "apikey",
         "apiSecret" : "apiKeySecret",
-        "bearerToken" : "bearerToken",
-        "token" : "token",
-        "tokenSecret" : "tokenSecret"
     }
