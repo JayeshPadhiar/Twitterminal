@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 import json
 import tweepy
 import shutil
@@ -27,7 +28,7 @@ def validate(keys):
         try:
             uname = oauth.get_username()
             print('Login Successful !\n')
-            print(f'Hello {uname}!')
+            print(f'Hello {uname}!'.center(shellcol))
             return oauth
 
         except Exception as authEx:
@@ -59,8 +60,9 @@ def login():
         verified = True
         try:
             uname = oauth.get_username()
+
             print('Login Successful !\n')
-            print(f'Hello {uname}!')
+            print(f'Hello {uname}!'.center(shellcol))
             user = {
                 'apiKey': apiKey,
                 'apiSecret': apiSecret,
@@ -79,6 +81,9 @@ def login():
 
 
 if __name__ == '__main__':
+
+    shellcol = shutil.get_terminal_size().columns
+
     print(f"\n{4*'-'} Twitterminal {4*'-'}\n")
 
     try:
