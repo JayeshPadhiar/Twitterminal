@@ -18,7 +18,6 @@ class Engine:
         self.api = tweepy.API(self.auth)
 
         self.parser = argparse.ArgumentParser()
-
         self.initparse()
 
     def exit(self, *args):
@@ -40,6 +39,15 @@ class Engine:
             task(*args)
             print(f"{80*'-'}\n\n".center(columns))
         return wrapper
+
+    def cell(self, tweet):
+        for line in tweet:
+            wrapped = textwrap.wrap(line, width=80)
+            for wrap in wrapped:
+                print(wrap.center(self.columns))
+        print(f"{10*'-'}\n".center(self.columns))
+
+
 
     def logout(self, *args):
 
@@ -77,28 +85,18 @@ class Engine:
                 print(f"{40*'-'}\n".center(self.columns), end='\n\n')
 
                 if numtweets:
-                    statusarr = self.api.user_timeline(id, count=numtweets, tweet_mode='extended')
+                    statusarr = self.api.user_timeline(
+                        id, count=numtweets, tweet_mode='extended')
                     for status in statusarr:
-                        #pprint(tweet._json)
+                        # pprint(tweet._json)
                         tweet = status.full_text.split('\n')
-                        for line in tweet:
-                            wrapped = textwrap.wrap(line, width=80)
-                            for wrap in wrapped:
-                                print(wrap.center(self.columns))
-                        print(f"{10*'-'}\n".center(self.columns))
-
-                    '''tweets = self.api.user_timeline(id, count=numtweets, tweet_mode='extended')
-                    for tweet in tweets:
-                        print("\n".join(line.center(self.columns)
-                                        for line in tweet.full_text.split("\n")))
-                        print('\n', f"{10*'-'}\n".center(self.columns))'''
+                        self.cell(tweet)
 
             except Exception as err:
                 print(f"Error : {err}".center(self.columns))
 
             finally:
                 pass
-                #print('\n', f"{80*'-'}\n".center(self.columns), end='\n\n\n', sep='')
 
     def me(self, *args):
 
@@ -116,30 +114,17 @@ class Engine:
                 self.columns))
             print("\n".join(line.center(self.columns)
                             for line in me.description.split("\n")), '\n')
-            print(f"{40*'-'}\n".center(self.columns), end='\n\n')
+            print(f"{40*'-'}\n".center(self.columns), end='\n')
 
             if numts:
 
-                statusarr = self.api.user_timeline(me.name, count=numts, tweet_mode='extended')
+                statusarr = self.api.user_timeline(
+                    me.name, count=numts, tweet_mode='extended')
 
                 for status in statusarr:
-                    #pprint(tweet._json)
+                    # pprint(tweet._json)
                     tweet = status.full_text.split('\n')
-                    for line in tweet:
-                        wrapped = textwrap.wrap(line, width=80)
-                        for wrap in wrapped:
-                            print(wrap.center(self.columns))
-
-                    print(f"{10*'-'}\n".center(self.columns))
-                    #print("\n".join(line.center(self.columns)
-                     #               for line in tweet.full_text.split("\n")))
-                
-                
-                '''tweets = self.api.user_timeline(me.name, count=numts, tweet_mode='extended')
-                for tweet in tweets:
-                    print("\n".join(line.center(self.columns)
-                                    for line in tweet.full_text.split("\n")))
-                    print('\n', f"{10*'-'}\n".center(self.columns))'''
+                    self.cell(tweet)   
 
         except Exception as err:
             print(f"Error : {err}")
@@ -155,25 +140,39 @@ class Engine:
             print('\nError : ', parserr)
 
         try:
-            statusarr = self.api.home_timeline(count=numts, tweet_mode='extended')
+            statusarr = self.api.home_timeline(
+                count=numts, tweet_mode='extended')
 
             for status in statusarr:
-                #pprint(tweet._json)
-                print(f'{status.user.name} (@{status.user.screen_name})'.center(self.columns), sep='')
+                # pprint(tweet._json)
+                print(
+                    f'{status.user.name} (@{status.user.screen_name})'.center(self.columns), sep='')
                 tweet = status.full_text.split('\n')
-                for line in tweet:
-                    wrapped = textwrap.wrap(line, width=80)
-                    for wrap in wrapped:
-                        print(wrap.center(self.columns))
+                self.cell(tweet)
                 
-                print(f"{10*'-'}\n".center(self.columns))
-                #print("\n".join(line.center(self.columns)
-                 #               for line in tweet.full_text.split("\n")))
-
         except Exception as err:
             print(f"Error : {err}")
         finally:
             pass
+
+    def followers(self, *args):
+
+        follower_count = 0
+        followers = tweepy.Cursor(self.api.followers)
+        try:
+            for follower in followers.items():
+                print(f"{10*'-'}".center(self.columns))
+                print(f'{follower.name} ({follower.screen_name})'.center(self.columns))
+                follower_count += 1
+
+            print(f"{10*'-'}".center(self.columns))
+            print(f'{follower_count} followers'.center(self.columns))
+            print(f"{20*'-'}\n".center(self.columns))
+
+        except Exception as exc:
+            print('Error : ', exc)
+
+        
 
     def tweet(self, *args):
         tweet = sys.stdin.read()
@@ -206,7 +205,7 @@ class Engine:
                 print(f'Followed {user}.')
             except Exception as followEx:
                 print('Error : ', followEx)
-        
+
     def unfollow(self, *args):
         users = list(args)
 
@@ -218,7 +217,7 @@ class Engine:
                 print(f'Unfollowed {user}.')
             except Exception as followEx:
                 print('Error : ', followEx)
-        
+
     def handler(self, req, *args):
         self.plex = {
             'me': self.me,
@@ -227,6 +226,7 @@ class Engine:
             'tweet': self.tweet,
             'follow': self.follow,
             'unfollow': self.unfollow,
+            'followers': self.followers,
             'logout': self.logout,
             'help': self.parser.print_help,
             'exit': self.exit
