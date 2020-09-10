@@ -120,6 +120,27 @@ class Engine:
             pass
             #print('\n', f"{40*'-'}\n".center(self.columns), end='\n\n\n',sep='')
 
+    def feed(self, *args):
+        try:
+            argums = self.parser.parse_args(args)
+            numts = argums.tweets
+        except Exception as parserr:
+            print('\nError : ', parserr)
+
+        try:
+            tweets = self.api.home_timeline(count=numts, tweet_mode='extended')
+
+            for tweet in tweets:
+                #pprint(tweet._json)
+                print(f'{tweet.user.name}(@{tweet.user.screen_name})'.center(self.columns), sep='')
+                print("\n".join(line.center(self.columns)
+                                for line in tweet.full_text.split("\n")))
+                print(f"{10*'-'}\n".center(self.columns))
+
+        except Exception as err:
+            print(f"Error : {err}")
+        finally:
+            pass
 
     def tweet(self, *args):
         tweet = sys.stdin.read()
@@ -145,6 +166,7 @@ class Engine:
         users = list(args)
 
         print(users)
+
         for user in users:
             try:
                 self.api.create_friendship(user)
@@ -156,6 +178,7 @@ class Engine:
         users = list(args)
 
         print(users)
+
         for user in users:
             try:
                 self.api.destroy_friendship(user)
@@ -167,6 +190,7 @@ class Engine:
         self.plex = {
             'me': self.me,
             'show': self.show,
+            'feed': self.feed,
             'tweet': self.tweet,
             'follow': self.follow,
             'unfollow': self.unfollow,
