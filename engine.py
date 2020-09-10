@@ -76,10 +76,10 @@ class Engine:
                 print(f"{40*'-'}\n".center(self.columns), end='\n\n')
 
                 if numtweets:
-                    tweets = self.api.user_timeline(id, count=numtweets)
+                    tweets = self.api.user_timeline(id, count=numtweets, tweet_mode='extended')
                     for tweet in tweets:
                         print("\n".join(line.center(self.columns)
-                                        for line in tweet.text.split("\n")))
+                                        for line in tweet.full_text.split("\n")))
                         print('\n', f"{10*'-'}\n".center(self.columns))
 
             except Exception as err:
@@ -108,10 +108,10 @@ class Engine:
             print(f"{40*'-'}\n".center(self.columns), end='\n\n')
 
             if numts:
-                tweets = self.api.user_timeline(me.name, count=numts)
+                tweets = self.api.user_timeline(me.name, count=numts, tweet_mode='extended')
                 for tweet in tweets:
                     print("\n".join(line.center(self.columns)
-                                    for line in tweet.text.split("\n")))
+                                    for line in tweet.full_text.split("\n")))
                     print('\n', f"{10*'-'}\n".center(self.columns))
 
         except Exception as err:
@@ -119,6 +119,7 @@ class Engine:
         finally:
             pass
             #print('\n', f"{40*'-'}\n".center(self.columns), end='\n\n\n',sep='')
+
 
     def tweet(self, *args):
         tweet = sys.stdin.read()
@@ -140,11 +141,35 @@ class Engine:
         except Exception as updEx:
             print('Error : ', updEx)
 
+    def follow(self, *args):
+        users = list(args)
+
+        print(users)
+        for user in users:
+            try:
+                self.api.create_friendship(user)
+                print(f'Followed {user}.')
+            except Exception as followEx:
+                print('Error : ', followEx)
+        
+    def unfollow(self, *args):
+        users = list(args)
+
+        print(users)
+        for user in users:
+            try:
+                self.api.destroy_friendship(user)
+                print(f'Unfollowed {user}.')
+            except Exception as followEx:
+                print('Error : ', followEx)
+        
     def handler(self, req, *args):
         self.plex = {
             'me': self.me,
             'show': self.show,
             'tweet': self.tweet,
+            'follow': self.follow,
+            'unfollow': self.unfollow,
             'logout': self.logout,
             'help': self.parser.print_help,
             'exit': self.exit
