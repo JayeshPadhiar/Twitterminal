@@ -2,6 +2,7 @@ import sys
 import json
 import shutil
 import tweepy
+import textwrap
 import argparse
 
 from pprint import pprint
@@ -76,11 +77,21 @@ class Engine:
                 print(f"{40*'-'}\n".center(self.columns), end='\n\n')
 
                 if numtweets:
-                    tweets = self.api.user_timeline(id, count=numtweets, tweet_mode='extended')
+                    statusarr = self.api.user_timeline(id, count=numtweets, tweet_mode='extended')
+                    for status in statusarr:
+                        #pprint(tweet._json)
+                        tweet = status.full_text.split('\n')
+                        for line in tweet:
+                            wrapped = textwrap.wrap(line, width=80)
+                            for wrap in wrapped:
+                                print(wrap.center(self.columns))
+                        print(f"{10*'-'}\n".center(self.columns))
+
+                    '''tweets = self.api.user_timeline(id, count=numtweets, tweet_mode='extended')
                     for tweet in tweets:
                         print("\n".join(line.center(self.columns)
                                         for line in tweet.full_text.split("\n")))
-                        print('\n', f"{10*'-'}\n".center(self.columns))
+                        print('\n', f"{10*'-'}\n".center(self.columns))'''
 
             except Exception as err:
                 print(f"Error : {err}".center(self.columns))
@@ -108,11 +119,27 @@ class Engine:
             print(f"{40*'-'}\n".center(self.columns), end='\n\n')
 
             if numts:
-                tweets = self.api.user_timeline(me.name, count=numts, tweet_mode='extended')
+
+                statusarr = self.api.user_timeline(me.name, count=numts, tweet_mode='extended')
+
+                for status in statusarr:
+                    #pprint(tweet._json)
+                    tweet = status.full_text.split('\n')
+                    for line in tweet:
+                        wrapped = textwrap.wrap(line, width=80)
+                        for wrap in wrapped:
+                            print(wrap.center(self.columns))
+
+                    print(f"{10*'-'}\n".center(self.columns))
+                    #print("\n".join(line.center(self.columns)
+                     #               for line in tweet.full_text.split("\n")))
+                
+                
+                '''tweets = self.api.user_timeline(me.name, count=numts, tweet_mode='extended')
                 for tweet in tweets:
                     print("\n".join(line.center(self.columns)
                                     for line in tweet.full_text.split("\n")))
-                    print('\n', f"{10*'-'}\n".center(self.columns))
+                    print('\n', f"{10*'-'}\n".center(self.columns))'''
 
         except Exception as err:
             print(f"Error : {err}")
@@ -128,14 +155,20 @@ class Engine:
             print('\nError : ', parserr)
 
         try:
-            tweets = self.api.home_timeline(count=numts, tweet_mode='extended')
+            statusarr = self.api.home_timeline(count=numts, tweet_mode='extended')
 
-            for tweet in tweets:
+            for status in statusarr:
                 #pprint(tweet._json)
-                print(f'{tweet.user.name}(@{tweet.user.screen_name})'.center(self.columns), sep='')
-                print("\n".join(line.center(self.columns)
-                                for line in tweet.full_text.split("\n")))
+                print(f'{status.user.name} (@{status.user.screen_name})'.center(self.columns), sep='')
+                tweet = status.full_text.split('\n')
+                for line in tweet:
+                    wrapped = textwrap.wrap(line, width=80)
+                    for wrap in wrapped:
+                        print(wrap.center(self.columns))
+                
                 print(f"{10*'-'}\n".center(self.columns))
+                #print("\n".join(line.center(self.columns)
+                 #               for line in tweet.full_text.split("\n")))
 
         except Exception as err:
             print(f"Error : {err}")
