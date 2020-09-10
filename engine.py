@@ -155,10 +155,10 @@ class Engine:
         finally:
             pass
 
-    def followers(self, *args):
+    def followers(self, uid=None):
 
         follower_count = 0
-        followers = tweepy.Cursor(self.api.followers)
+        followers = tweepy.Cursor(self.api.followers, uid)
         try:
             for follower in followers.items():
                 print(f"{10*'-'}".center(self.columns))
@@ -172,6 +172,22 @@ class Engine:
         except Exception as exc:
             print('Error : ', exc)
 
+    def friends(self, uid=None):
+    
+        friend_count = 0
+        friends = tweepy.Cursor(self.api.friends, uid)
+        try:
+            for friend in friends.items():
+                print(f"{10*'-'}".center(self.columns))
+                print(f'{friend.name} ({friend.screen_name})'.center(self.columns))
+                friend_count += 1
+
+            print(f"{10*'-'}".center(self.columns))
+            print(f'{friend_count} following'.center(self.columns))
+            print(f"{20*'-'}\n".center(self.columns))
+
+        except Exception as exc:
+            print('Error : ', exc)
         
 
     def tweet(self, *args):
@@ -226,6 +242,7 @@ class Engine:
             'tweet': self.tweet,
             'follow': self.follow,
             'unfollow': self.unfollow,
+            'friends': self.friends,
             'followers': self.followers,
             'logout': self.logout,
             'help': self.parser.print_help,
