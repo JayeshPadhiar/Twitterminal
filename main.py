@@ -104,4 +104,4 @@ if __name__ == '__main__':
 
     while True:
         req = input('\n:$ ').strip().split()
-        engine.handler(req[0], *req[1:])
+        engine.handler(*req)

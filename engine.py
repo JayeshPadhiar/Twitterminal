@@ -26,10 +26,6 @@ class Engine:
     def unknown(self, *args):
         print('Invalid Function')
 
-    def initparse(self):
-        self.parser.add_argument('-u', '--user', nargs='+')
-        self.parser.add_argument('-t', '--tweets', type=int)
-
     @staticmethod
     def wrap(task):
         def wrapper(*args):
@@ -47,8 +43,6 @@ class Engine:
                 print(wrap.center(self.columns))
         print(f"{10*'-'}\n".center(self.columns))
 
-
-
     def logout(self, *args):
 
         key = {
@@ -65,15 +59,9 @@ class Engine:
             print('Error : ', exc)
             exit()
 
-    def show(self, *args):
-        try:
-            argums = self.parser.parse_args(args)
-            ids = argums.user
-            numtweets = argums.tweets
-        except SystemExit as parserr:
-            print(f"Error : {parserr}")
-
-        for id in ids:
+    def show(self, args):
+        
+        for id in args.users:
             try:
                 user = self.api.get_user(id)
                 print('\n', f'{user.name}'.center(self.columns), sep='')
@@ -84,9 +72,9 @@ class Engine:
                                 for line in user.description.split("\n")), '\n')
                 print(f"{40*'-'}\n".center(self.columns), end='\n\n')
 
-                if numtweets:
+                if args.tweets:
                     statusarr = self.api.user_timeline(
-                        id, count=numtweets, tweet_mode='extended')
+                        id, count=args.tweets, tweet_mode='extended')
                     for status in statusarr:
                         # pprint(tweet._json)
                         tweet = status.full_text.split('\n')
@@ -98,13 +86,7 @@ class Engine:
             finally:
                 pass
 
-    def me(self, *args):
-
-        try:
-            argums = self.parser.parse_args(args)
-            numts = argums.tweets
-        except Exception as parserr:
-            print('\nError : ', parserr)
+    def me(self, args):
 
         try:
             me = self.api.me()
@@ -116,15 +98,14 @@ class Engine:
                             for line in me.description.split("\n")), '\n')
             print(f"{40*'-'}\n".center(self.columns), end='\n')
 
-            if numts:
-
+            if args.tweets:
                 statusarr = self.api.user_timeline(
-                    me.name, count=numts, tweet_mode='extended')
+                    me.name, count=args.tweets, tweet_mode='extended')
 
                 for status in statusarr:
                     # pprint(tweet._json)
                     tweet = status.full_text.split('\n')
-                    self.cell(tweet)   
+                    self.cell(tweet)
 
         except Exception as err:
             print(f"Error : {err}")
@@ -132,16 +113,11 @@ class Engine:
             pass
             #print('\n', f"{40*'-'}\n".center(self.columns), end='\n\n\n',sep='')
 
-    def feed(self, *args):
-        try:
-            argums = self.parser.parse_args(args)
-            numts = argums.tweets
-        except Exception as parserr:
-            print('\nError : ', parserr)
+    def feed(self, args):
 
         try:
             statusarr = self.api.home_timeline(
-                count=numts, tweet_mode='extended')
+                count=args.tweets, tweet_mode='extended')
 
             for status in statusarr:
                 # pprint(tweet._json)
@@ -149,20 +125,21 @@ class Engine:
                     f'{status.user.name} (@{status.user.screen_name})'.center(self.columns), sep='')
                 tweet = status.full_text.split('\n')
                 self.cell(tweet)
-                
+
         except Exception as err:
             print(f"Error : {err}")
         finally:
             pass
 
-    def followers(self, uid=None):
+    def followers(self, args):
 
         follower_count = 0
-        followers = tweepy.Cursor(self.api.followers, uid)
+        followers = tweepy.Cursor(self.api.followers, args.user)
         try:
             for follower in followers.items():
                 print(f"{10*'-'}".center(self.columns))
-                print(f'{follower.name} ({follower.screen_name})'.center(self.columns))
+                print(f'{follower.name} ({follower.screen_name})'.center(
+                    self.columns))
                 follower_count += 1
 
             print(f"{10*'-'}".center(self.columns))
@@ -172,10 +149,10 @@ class Engine:
         except Exception as exc:
             print('Error : ', exc)
 
-    def friends(self, uid=None):
-    
+    def friends(self, args):
+
         friend_count = 0
-        friends = tweepy.Cursor(self.api.friends, uid)
+        friends = tweepy.Cursor(self.api.friends, args.user)
         try:
             for friend in friends.items():
                 print(f"{10*'-'}".center(self.columns))
@@ -188,7 +165,6 @@ class Engine:
 
         except Exception as exc:
             print('Error : ', exc)
-        
 
     def tweet(self, *args):
         tweet = sys.stdin.read()
@@ -210,46 +186,69 @@ class Engine:
         except Exception as updEx:
             print('Error : ', updEx)
 
-    def follow(self, *args):
-        users = list(args)
+    def follow(self, args):
 
-        print(users)
-
-        for user in users:
+        for user in args.users:
             try:
                 self.api.create_friendship(user)
                 print(f'Followed {user}.')
             except Exception as followEx:
                 print('Error : ', followEx)
 
-    def unfollow(self, *args):
-        users = list(args)
-
-        print(users)
-
-        for user in users:
+    def unfollow(self, args):
+        
+        for user in args.users:
             try:
                 self.api.destroy_friendship(user)
                 print(f'Unfollowed {user}.')
             except Exception as followEx:
                 print('Error : ', followEx)
 
-    def handler(self, req, *args):
-        self.plex = {
-            'me': self.me,
-            'show': self.show,
-            'feed': self.feed,
-            'tweet': self.tweet,
-            'follow': self.follow,
-            'unfollow': self.unfollow,
-            'friends': self.friends,
-            'followers': self.followers,
-            'logout': self.logout,
-            'help': self.parser.print_help,
-            'exit': self.exit
-        }
-
+    def handler(self, *args):
         try:
-            self.plex.get(req.lower(), self.unknown)(*args)
-        except Exception as exc:
-            print("Error : ", exc)
+            req = self.parser.parse_args(args)
+            req.function(req)
+        except Exception as ex:
+            print(ex)
+
+    def initparse(self):
+        self.subparser = self.parser.add_subparsers()
+
+        self.show_parser = self.subparser.add_parser(
+            'show', help='Show user profile')
+        self.show_parser.add_argument('users', nargs='+', help='user_id')
+        self.show_parser.add_argument(
+            '--tweets', '-t', type=int, help='Number of tweets to display', dest='tweets')
+        self.show_parser.set_defaults(function=self.show)
+
+        self.me_parser = self.subparser.add_parser(
+            'me', help='Show my profile')
+        self.me_parser.add_argument(
+            '--tweets', '-t', type=int, help='Number of tweets to display', dest='tweets')
+        self.me_parser.set_defaults(function=self.me)
+
+        self.feed_parser = self.subparser.add_parser(
+            'feed', help='Show Feeds')
+        self.feed_parser.add_argument(
+            '--tweets', '-t', default=20, type=int, help='Number of tweets to display', dest='tweets')
+        self.feed_parser.set_defaults(function=self.feed)
+
+        self.follower_parser = self.subparser.add_parser(
+            'followers', help='Show Followers')
+        self.follower_parser.add_argument('-u', '--user', default=None, help='user_id')
+        self.follower_parser.set_defaults(function=self.followers)
+
+        self.friend_parser = self.subparser.add_parser(
+            'friends', help='Show Friends')
+        self.friend_parser.add_argument('-u', '--user', default=None, help='user_id')
+        self.friend_parser.set_defaults(function=self.friends)
+
+        self.follow_parser = self.subparser.add_parser(
+            'follow', help='Follow user/s')
+        self.follow_parser.add_argument('users', nargs='+', help='user_ids')
+        self.follow_parser.set_defaults(function=self.follow)
+
+        self.unfollow_parser = self.subparser.add_parser(
+            'unfollow', help='Unollow user/s')
+        self.unfollow_parser.add_argument('users', nargs='+', help='user_ids')
+        self.unfollow_parser.set_defaults(function=self.unfollow)
