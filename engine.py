@@ -1,12 +1,14 @@
+from __future__ import unicode_literals
+
 import sys
 import json
 import shutil
 import tweepy
 import textwrap
 import argparse
+from youtube_dl import YoutubeDL
 
 from pprint import pprint
-
 
 class Engine:
 
@@ -60,7 +62,7 @@ class Engine:
             exit()
 
     def show(self, args):
-        
+
         for id in args.users:
             try:
                 user = self.api.get_user(id)
@@ -196,13 +198,29 @@ class Engine:
                 print('Error : ', followEx)
 
     def unfollow(self, args):
-        
+
         for user in args.users:
             try:
                 self.api.destroy_friendship(user)
                 print(f'Unfollowed {user}.')
             except Exception as followEx:
                 print('Error : ', followEx)
+
+    def show_tweet(self, args):
+        for twid in args.twids:
+            try:
+                tweet = self.api.get_status(twid, tweet_mode='extended')
+                print(f"{10*'-'}".center(self.columns))
+                print(
+                    f'{tweet.user.name} (@{tweet.user.screen_name})'.center(self.columns), '\n', sep='')
+                tweet = tweet.full_text.split('\n')
+                self.cell(tweet)
+
+            except Exception as err:
+                print(f"Error : {err}")
+            finally:
+                pass
+
 
     def handler(self, *args):
         try:
@@ -235,12 +253,14 @@ class Engine:
 
         self.follower_parser = self.subparser.add_parser(
             'followers', help='Show Followers')
-        self.follower_parser.add_argument('-u', '--user', default=None, help='user_id')
+        self.follower_parser.add_argument(
+            '-u', '--user', default=None, help='user_id')
         self.follower_parser.set_defaults(function=self.followers)
 
         self.friend_parser = self.subparser.add_parser(
             'friends', help='Show Friends')
-        self.friend_parser.add_argument('-u', '--user', default=None, help='user_id')
+        self.friend_parser.add_argument(
+            '-u', '--user', default=None, help='user_id')
         self.friend_parser.set_defaults(function=self.friends)
 
         self.follow_parser = self.subparser.add_parser(
@@ -252,3 +272,8 @@ class Engine:
             'unfollow', help='Unollow user/s')
         self.unfollow_parser.add_argument('users', nargs='+', help='user_ids')
         self.unfollow_parser.set_defaults(function=self.unfollow)
+
+        self.showt_parser = self.subparser.add_parser(
+            'showt', help='Show Tweets')
+        self.showt_parser.add_argument('twids', nargs='+', help='tweet_ids')
+        self.showt_parser.set_defaults(function=self.show_tweet)
