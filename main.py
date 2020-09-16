@@ -7,7 +7,6 @@ import webbrowser
 
 import engine
 
-
 def validate(keys):
     keys = dict(keys)
 
@@ -34,8 +33,7 @@ def validate(keys):
         except Exception as authEx:
             raise Exception(f'OAuth Faluire: {authEx}\n')
 
-
-def login():
+def login():    
     try:
         with open('keys.json') as apicreds:
             keys = dict(json.load(apicreds))
@@ -78,7 +76,6 @@ def login():
         print(authEx)
         print('Try again.')
         exit()
-
 
 if __name__ == '__main__':
 

@@ -10,6 +10,7 @@ from youtube_dl import YoutubeDL
 
 from pprint import pprint
 
+
 class Engine:
 
     def __init__(self, auth):
@@ -46,7 +47,6 @@ class Engine:
         print(f"{10*'-'}\n".center(self.columns))
 
     def logout(self, *args):
-
         key = {
             'apiKey': self.auth.consumer_key.decode(),
             'apiSecret': self.auth.consumer_secret.decode()
@@ -62,7 +62,6 @@ class Engine:
             exit()
 
     def show(self, args):
-
         for id in args.users:
             try:
                 user = self.api.get_user(id)
@@ -73,6 +72,9 @@ class Engine:
                 print("\n".join(line.center(self.columns)
                                 for line in user.description.split("\n")), '\n')
                 print(f"{40*'-'}\n".center(self.columns), end='\n\n')
+
+                if args.raw:
+                    self.raw(user)
 
                 if args.tweets:
                     statusarr = self.api.user_timeline(
@@ -89,7 +91,6 @@ class Engine:
                 pass
 
     def me(self, args):
-
         try:
             me = self.api.me()
             print('\n\n', f'{me.name}'.center(self.columns), sep='')
@@ -98,7 +99,10 @@ class Engine:
                 self.columns))
             print("\n".join(line.center(self.columns)
                             for line in me.description.split("\n")), '\n')
-            print(f"{40*'-'}\n".center(self.columns), end='\n')
+            print(f"{40*'-'}".center(self.columns), end='\n')
+
+            if args.raw:
+                self.raw(me)
 
             if args.tweets:
                 statusarr = self.api.user_timeline(
@@ -116,7 +120,6 @@ class Engine:
             #print('\n', f"{40*'-'}\n".center(self.columns), end='\n\n\n',sep='')
 
     def feed(self, args):
-
         try:
             statusarr = self.api.home_timeline(
                 count=args.tweets, tweet_mode='extended')
@@ -134,7 +137,6 @@ class Engine:
             pass
 
     def followers(self, args):
-
         follower_count = 0
         followers = tweepy.Cursor(self.api.followers, args.user)
         try:
@@ -152,7 +154,6 @@ class Engine:
             print('Error : ', exc)
 
     def friends(self, args):
-
         friend_count = 0
         friends = tweepy.Cursor(self.api.friends, args.user)
         try:
@@ -189,7 +190,6 @@ class Engine:
             print('Error : ', updEx)
 
     def follow(self, args):
-
         for user in args.users:
             try:
                 self.api.create_friendship(user)
@@ -198,7 +198,6 @@ class Engine:
                 print('Error : ', followEx)
 
     def unfollow(self, args):
-
         for user in args.users:
             try:
                 self.api.destroy_friendship(user)
@@ -216,16 +215,25 @@ class Engine:
                 tweet = tweet.full_text.split('\n')
                 self.cell(tweet)
 
+                if args.raw:
+                    self.raw(tweet)
+
             except Exception as err:
                 print(f"Error : {err}")
             finally:
                 pass
 
+    def raw(self, raw_item):
+        print(f"{40*'-'}".center(self.columns), end='\n')
+        pprint(raw_item._json)
+        print(f"{40*'-'}\n".center(self.columns), end='\n\n')
 
     def handler(self, *args):
         try:
             req = self.parser.parse_args(args)
             req.function(req)
+            #print(req)
+
         except Exception as ex:
             print(ex)
 
@@ -236,19 +244,23 @@ class Engine:
             'show', help='Show user profile')
         self.show_parser.add_argument('users', nargs='+', help='user_id')
         self.show_parser.add_argument(
-            '--tweets', '-t', type=int, help='Number of tweets to display', dest='tweets')
+            '-t', '--tweets', type=int, help='Number of tweets to display', dest='tweets')
+        self.show_parser.add_argument(
+            '-r', '--raw', action='store_true', help='Show raw data')
         self.show_parser.set_defaults(function=self.show)
 
         self.me_parser = self.subparser.add_parser(
             'me', help='Show my profile')
         self.me_parser.add_argument(
-            '--tweets', '-t', type=int, help='Number of tweets to display', dest='tweets')
+            '-t', '--tweets', type=int, help='Number of tweets to display', dest='tweets')
+        self.me_parser.add_argument(
+             '-r', '--raw', action='store_true', help='Show raw data')
         self.me_parser.set_defaults(function=self.me)
 
         self.feed_parser = self.subparser.add_parser(
             'feed', help='Show Feeds')
         self.feed_parser.add_argument(
-            '--tweets', '-t', default=20, type=int, help='Number of tweets to display', dest='tweets')
+             '-t', '--tweets', default=20, type=int, help='Number of tweets to display', dest='tweets')
         self.feed_parser.set_defaults(function=self.feed)
 
         self.follower_parser = self.subparser.add_parser(
@@ -275,5 +287,7 @@ class Engine:
 
         self.showt_parser = self.subparser.add_parser(
             'showt', help='Show Tweets')
+        self.showt_parser.add_argument(
+             '-r', '--raw', action='store_true', help='Show raw data')
         self.showt_parser.add_argument('twids', nargs='+', help='tweet_ids')
         self.showt_parser.set_defaults(function=self.show_tweet)
