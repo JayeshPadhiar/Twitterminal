@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 
+import os
 import sys
 import json
 import shutil
@@ -84,6 +85,9 @@ class Engine:
                         tweet = status.full_text.split('\n')
                         self.cell(tweet)
 
+                        if args.download:
+                            self._download(status)
+
             except Exception as err:
                 print(f"Error : {err}".center(self.columns))
 
@@ -113,6 +117,9 @@ class Engine:
                     tweet = status.full_text.split('\n')
                     self.cell(tweet)
 
+                    if args.download:
+                            self._download(status)
+
         except Exception as err:
             print(f"Error : {err}")
         finally:
@@ -130,6 +137,9 @@ class Engine:
                     f'{status.user.name} (@{status.user.screen_name})'.center(self.columns), sep='')
                 tweet = status.full_text.split('\n')
                 self.cell(tweet)
+
+                if args.download:
+                            self._download(status)
 
         except Exception as err:
             print(f"Error : {err}")
@@ -167,7 +177,7 @@ class Engine:
             print(f"{20*'-'}\n".center(self.columns))
 
         except Exception as exc:
-            print('Error : ', exc)
+            print('Error : ', exc)  
 
     def tweet(self, *args):
         tweet = sys.stdin.read()
@@ -212,16 +222,45 @@ class Engine:
                 print(f"{10*'-'}".center(self.columns))
                 print(
                     f'{tweet.user.name} (@{tweet.user.screen_name})'.center(self.columns), '\n', sep='')
-                tweet = tweet.full_text.split('\n')
-                self.cell(tweet)
+                tweet_text = tweet.full_text.split('\n')
+                self.cell(tweet_text)
 
                 if args.raw:
                     self.raw(tweet)
+
+                if args.download:
+                    self._download(tweet)
 
             except Exception as err:
                 print(f"Error : {err}")
             finally:
                 pass
+
+    def _download(self, tweet):
+
+        params = {
+            'format': 'best',
+        }
+
+        try:
+            if tweet.extended_entities.get('media', False):
+                
+                media_arr = list(tweet.extended_entities.get('media'))
+                for media in media_arr:
+                    if media['type'] == 'photo':
+                        print('Downloading photo')
+                        os.system('wget {}'.format(media['media_url']))
+                    else:
+                        url = media.get('url')
+                        print('Downloading Video', url)
+                        with YoutubeDL(params) as getter:
+                            getter.download([url])                        
+            else:
+                print('No media')
+
+        except Exception as getex:
+            print('Error : ', getex)
+
 
     def raw(self, raw_item):
         print(f"{40*'-'}".center(self.columns), end='\n')
@@ -247,10 +286,14 @@ class Engine:
             '-t', '--tweets', type=int, help='Number of tweets to display', dest='tweets')
         self.show_parser.add_argument(
             '-r', '--raw', action='store_true', help='Show raw data')
+        self.show_parser.add_argument(
+             '-d', '--download', action='store_true', help='Download media')
         self.show_parser.set_defaults(function=self.show)
 
         self.me_parser = self.subparser.add_parser(
             'me', help='Show my profile')
+        self.me_parser.add_argument(
+             '-d', '--download', action='store_true', help='Download media')
         self.me_parser.add_argument(
             '-t', '--tweets', type=int, help='Number of tweets to display', dest='tweets')
         self.me_parser.add_argument(
@@ -259,6 +302,8 @@ class Engine:
 
         self.feed_parser = self.subparser.add_parser(
             'feed', help='Show Feeds')
+        self.feed_parser.add_argument(
+         '-d', '--download', action='store_true', help='Download media')
         self.feed_parser.add_argument(
              '-t', '--tweets', default=20, type=int, help='Number of tweets to display', dest='tweets')
         self.feed_parser.set_defaults(function=self.feed)
@@ -289,5 +334,7 @@ class Engine:
             'showt', help='Show Tweets')
         self.showt_parser.add_argument(
              '-r', '--raw', action='store_true', help='Show raw data')
+        self.showt_parser.add_argument(
+             '-d', '--download', action='store_true', help='Download media')
         self.showt_parser.add_argument('twids', nargs='+', help='tweet_ids')
         self.showt_parser.set_defaults(function=self.show_tweet)

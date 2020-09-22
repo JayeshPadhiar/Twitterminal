@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 import sys
 import json
 import tweepy
@@ -18,7 +19,7 @@ def validate(keys):
 
     if None in [apiKey, apiSecret, token, tokenSecret]:
         raise Exception('Some credentials are missing.\n')
-
+ 
     else:
         print('Credentials fetched. Running OAuth...')
         oauth = tweepy.OAuthHandler(apiKey, apiSecret)
